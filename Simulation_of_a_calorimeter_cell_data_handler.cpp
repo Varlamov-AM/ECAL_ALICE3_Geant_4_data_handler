@@ -1893,12 +1893,12 @@ void Chi_c_data_from_Geant4_wom_magnet(TFile* output_data, TChain* input){
         TH1D* efficiency_chic1_pt_depends = new TH1D("efficiency_chic1_pt_depends", "efficiency_chic1_pt_depends", 10, -0.5, 10.5);
         TH1D* efficiency_chic2_pt_depends = new TH1D("efficiency_chic2_pt_depends", "efficiency_chic2_pt_depends", 10, -0.5, 10.5);
 
-        for (int k = 0; k < n_entries; ++k){
+        for (int k = 0; k < n_entries/100; ++k){
             input->GetEntry(k);
 
             if (k % 10000 == 0){
                 std::cout << 
-                    Form("k = %06d in %d\n", k, n_entries);
+                    Form("k = %09d in %d\n", k, n_entries);
             }
 
             int cal_size = static_cast<int>(sqrt(cells_energy->size()));
