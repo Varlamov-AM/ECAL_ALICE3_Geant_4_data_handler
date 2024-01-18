@@ -28,95 +28,97 @@ void        Chi_c_data_from_Geant4_wom_magnet(TFile*, TChain*);
 void        Chi_c_data_from_Geant4_wim_magnet(TFile*, TChain*);
 Double_t    CB(Double_t*, Double_t*);
 
+
 int Simulation_of_a_calorimeter_cell_data_handler(){
     int exeption_code  = main();
     return exeption_code;
 }
 
+
 int main(){
 
     TFile* final_result = 
         new TFile("Handled_calorimeter_energy_edeption_data.root", 
-        "UPDATE");
-    //     "RECREATE");
+        // "UPDATE");
+        "RECREATE");
 
-    // final_result->cd();
+    final_result->cd();
 
-    // TDirectory* Electron_data = final_result->mkdir("Electron_data");
-    // Electron_data->cd();
+    TDirectory* Electron_data = final_result->mkdir("Electron_data");
+    Electron_data->cd();
 
-    // TDirectory* Electrons_Prime_energy_spectrum = Electron_data->mkdir("Prime_energy_spectrum");
-    // TDirectory* Electrons_Smear_energy_spectrum = Electron_data->mkdir("Smear_energy_spectrum");
-    // TDirectory* Electrons_Prime_optic_photons_spectrum = Electron_data->mkdir("Prime_optic_photons_spectrum");
-    // TDirectory* Electrons_Smear_optic_photons_spectrum = Electron_data->mkdir("Smear_optic_photons_spectrum");
-    // TDirectory* Electrons_Parametrization_of_resolution = Electron_data->mkdir("Parametrization_of_resolution");
+    TDirectory* Electrons_Prime_energy_spectrum = Electron_data->mkdir("Prime_energy_spectrum");
+    TDirectory* Electrons_Smear_energy_spectrum = Electron_data->mkdir("Smear_energy_spectrum");
+    TDirectory* Electrons_Prime_optic_photons_spectrum = Electron_data->mkdir("Prime_optic_photons_spectrum");
+    TDirectory* Electrons_Smear_optic_photons_spectrum = Electron_data->mkdir("Smear_optic_photons_spectrum");
+    TDirectory* Electrons_Parametrization_of_resolution = Electron_data->mkdir("Parametrization_of_resolution");
 
-    // final_result->cd();
+    final_result->cd();
 
-    // TDirectory* Photon_data = final_result->mkdir("Photon_data");
-    // Photon_data->cd();
+    TDirectory* Photon_data = final_result->mkdir("Photon_data");
+    Photon_data->cd();
 
-    // TDirectory* Photons_Prime_energy_spectrum = Photon_data->mkdir("Prime_energy_spectrum");
-    // TDirectory* Photons_Smear_energy_spectrum = Photon_data->mkdir("Smear_energy_spectrum");
-    // TDirectory* Photons_Prime_optic_photons_spectrum = Photon_data->mkdir("Prime_optic_photons_spectrum");
-    // TDirectory* Photons_Smear_optic_photons_spectrum = Photon_data->mkdir("Smear_optic_photons_spectrum");
-    // TDirectory* Photons_Parametrization_of_resolution = Photon_data->mkdir("Parametrization_of_resolution");
+    TDirectory* Photons_Prime_energy_spectrum = Photon_data->mkdir("Prime_energy_spectrum");
+    TDirectory* Photons_Smear_energy_spectrum = Photon_data->mkdir("Smear_energy_spectrum");
+    TDirectory* Photons_Prime_optic_photons_spectrum = Photon_data->mkdir("Prime_optic_photons_spectrum");
+    TDirectory* Photons_Smear_optic_photons_spectrum = Photon_data->mkdir("Smear_optic_photons_spectrum");
+    TDirectory* Photons_Parametrization_of_resolution = Photon_data->mkdir("Parametrization_of_resolution");
 
-    // final_result->cd();
+    final_result->cd();
 
-    // TDirectory* Muon_data = final_result->mkdir("Muon_data");
-    // Muon_data->cd();
+    TDirectory* Muon_data = final_result->mkdir("Muon_data");
+    Muon_data->cd();
 
-    // TDirectory* Muons_Prime_energy_spectrum = Muon_data->mkdir("Prime_energy_spectrum");
-    // TDirectory* Muons_Smear_energy_spectrum = Muon_data->mkdir("Smear_energy_spectrum");
-    // TDirectory* Muons_Prime_optic_photons_spectrum = Muon_data->mkdir("Prime_optic_photons_spectrum");
-    // TDirectory* Muons_Smear_optic_photons_spectrum = Muon_data->mkdir("Smear_optic_photons_spectrum");
-    // TDirectory* Muons_MIP_peak_fitting = Muon_data->mkdir("MIP_peak_fitting");
+    TDirectory* Muons_Prime_energy_spectrum = Muon_data->mkdir("Prime_energy_spectrum");
+    TDirectory* Muons_Smear_energy_spectrum = Muon_data->mkdir("Smear_energy_spectrum");
+    TDirectory* Muons_Prime_optic_photons_spectrum = Muon_data->mkdir("Prime_optic_photons_spectrum");
+    TDirectory* Muons_Smear_optic_photons_spectrum = Muon_data->mkdir("Smear_optic_photons_spectrum");
+    TDirectory* Muons_MIP_peak_fitting = Muon_data->mkdir("MIP_peak_fitting");
 
-    // TDirectory* Pion_data = final_result->mkdir("Pion_data");
-    // Pion_data->cd();
+    TDirectory* Pion_data = final_result->mkdir("Pion_data");
+    Pion_data->cd();
 
-    // TDirectory* Pions_Prime_energy_spectrum = Pion_data->mkdir("Prime_energy_spectrum");
-    // TDirectory* Pions_Smear_energy_spectrum = Pion_data->mkdir("Smear_energy_spectrum");
-    // TDirectory* Pions_Prime_optic_photons_spectrum = Pion_data->mkdir("Prime_optic_photons_spectrum");
-    // TDirectory* Pions_Smear_optic_photons_spectrum = Pion_data->mkdir("Smear_optic_photons_spectrum");
-    // TDirectory* Pions_Spectrum_parametrization = Pion_data->mkdir("Spectrum_parametrization");
+    TDirectory* Pions_Prime_energy_spectrum = Pion_data->mkdir("Prime_energy_spectrum");
+    TDirectory* Pions_Smear_energy_spectrum = Pion_data->mkdir("Smear_energy_spectrum");
+    TDirectory* Pions_Prime_optic_photons_spectrum = Pion_data->mkdir("Prime_optic_photons_spectrum");
+    TDirectory* Pions_Smear_optic_photons_spectrum = Pion_data->mkdir("Smear_optic_photons_spectrum");
+    TDirectory* Pions_Spectrum_parametrization = Pion_data->mkdir("Spectrum_parametrization");
 
-    // TDirectory* Proton_data = final_result->mkdir("Proton_data");
-    // Proton_data->cd();
+    TDirectory* Proton_data = final_result->mkdir("Proton_data");
+    Proton_data->cd();
 
-    // TDirectory* Protons_Prime_energy_spectrum = Proton_data->mkdir("Prime_energy_spectrum");
-    // TDirectory* Protons_Smear_energy_spectrum = Proton_data->mkdir("Smear_energy_spectrum");
-    // TDirectory* Protons_Prime_optic_photons_spectrum = Proton_data->mkdir("Prime_optic_photons_spectrum");
-    // TDirectory* Protons_Smear_optic_photons_spectrum = Proton_data->mkdir("Smear_optic_photons_spectrum");
-    // TDirectory* Protons_Spectrum_parametrization = Proton_data->mkdir("Spectrum_parametrization");
+    TDirectory* Protons_Prime_energy_spectrum = Proton_data->mkdir("Prime_energy_spectrum");
+    TDirectory* Protons_Smear_energy_spectrum = Proton_data->mkdir("Smear_energy_spectrum");
+    TDirectory* Protons_Prime_optic_photons_spectrum = Proton_data->mkdir("Prime_optic_photons_spectrum");
+    TDirectory* Protons_Smear_optic_photons_spectrum = Proton_data->mkdir("Smear_optic_photons_spectrum");
+    TDirectory* Protons_Spectrum_parametrization = Proton_data->mkdir("Spectrum_parametrization");
 
-    // TDirectory* Kaon_data = final_result->mkdir("Kaon_data");
-    // Kaon_data->cd();
+    TDirectory* Kaon_data = final_result->mkdir("Kaon_data");
+    Kaon_data->cd();
 
-    // TDirectory* Kaons_Prime_energy_spectrum = Kaon_data->mkdir("Prime_energy_spectrum");
-    // TDirectory* Kaons_Smear_energy_spectrum = Kaon_data->mkdir("Smear_energy_spectrum");
-    // TDirectory* Kaons_Prime_optic_photons_spectrum = Kaon_data->mkdir("Prime_optic_photons_spectrum");
-    // TDirectory* Kaons_Smear_optic_photons_spectrum = Kaon_data->mkdir("Smear_optic_photons_spectrum");
-    // TDirectory* Kaons_Spectrum_parametrization = Kaon_data->mkdir("Spectrum_parametrization");
+    TDirectory* Kaons_Prime_energy_spectrum = Kaon_data->mkdir("Prime_energy_spectrum");
+    TDirectory* Kaons_Smear_energy_spectrum = Kaon_data->mkdir("Smear_energy_spectrum");
+    TDirectory* Kaons_Prime_optic_photons_spectrum = Kaon_data->mkdir("Prime_optic_photons_spectrum");
+    TDirectory* Kaons_Smear_optic_photons_spectrum = Kaon_data->mkdir("Smear_optic_photons_spectrum");
+    TDirectory* Kaons_Spectrum_parametrization = Kaon_data->mkdir("Spectrum_parametrization");
 
-    // TDirectory* Cluster_data = final_result->mkdir("Cluster_data_for_separated_calorimeter");
-    // Cluster_data->cd();
+    TDirectory* Cluster_data = final_result->mkdir("Cluster_data_for_separated_calorimeter");
+    Cluster_data->cd();
 
-    // TDirectory* Energy_distribution_in_cells = Cluster_data->mkdir("Cluster_energy_distribution_in_cells");
-    // TDirectory* Center_of_cluster_properties = Cluster_data->mkdir("Center_of_cluster_properties");
-    // TDirectory* Edepted_energy_parametrization = Energy_distribution_in_cells->mkdir("Edepted_energy_parametrization");
+    TDirectory* Energy_distribution_in_cells = Cluster_data->mkdir("Cluster_energy_distribution_in_cells");
+    TDirectory* Center_of_cluster_properties = Cluster_data->mkdir("Center_of_cluster_properties");
+    TDirectory* Edepted_energy_parametrization = Energy_distribution_in_cells->mkdir("Edepted_energy_parametrization");
 
-    // TDirectory* Cluster_data_wm = final_result->mkdir("Cluster_data_for_calorimeter_with_magnet");
-    // Cluster_data_wm->cd();
+    TDirectory* Cluster_data_wm = final_result->mkdir("Cluster_data_for_calorimeter_with_magnet");
+    Cluster_data_wm->cd();
 
-    // TDirectory* Energy_distribution_in_cells_wm   = Cluster_data_wm->mkdir("Cluster_energy_distribution_in_cells");
-    // TDirectory* Center_of_cluster_properties_wm   = Cluster_data_wm->mkdir("Center_of_cluster_properties");
-    // TDirectory* Edepted_energy_parametrization_wm = Energy_distribution_in_cells_wm->mkdir("Edepted_energy_parametrization");
+    TDirectory* Energy_distribution_in_cells_wm   = Cluster_data_wm->mkdir("Cluster_energy_distribution_in_cells");
+    TDirectory* Center_of_cluster_properties_wm   = Cluster_data_wm->mkdir("Center_of_cluster_properties");
+    TDirectory* Edepted_energy_parametrization_wm = Energy_distribution_in_cells_wm->mkdir("Edepted_energy_parametrization");
 
-    // TDirectory* Chi_c_data_from_Geant4_wom_dir = final_result->mkdir("Chi_c_data_from_Geant4_without_magnet");
+    TDirectory* Chi_c_data_from_Geant4_wom_dir = final_result->mkdir("Chi_c_data_from_Geant4_without_magnet");
 
-    // TDirectory* Chi_c_data_from_Geant4_wim_dir = final_result->mkdir("Chi_c_data_from_Geant4_with_magnet");
+    TDirectory* Chi_c_data_from_Geant4_wim_dir = final_result->mkdir("Chi_c_data_from_Geant4_with_magnet");
 
     TChain* photon_edepted_energy_tree_chain = new TChain("energy_tree");
     TString photon_tree_dir_path = "/home/antony/Documents/Projects/Simulation_of_a_calorimeter_cell/build/Local_batch_fit_parameterization_28_02_2023";
@@ -181,17 +183,17 @@ int main(){
     }
 
     TChain* Chi_c_data_from_Geant4_with_0dot0X0 = new TChain("calorimeter_data");
-    TString Chi_c_data_from_Geant4_with_0dot0X0_dir_path = "/home/antony/Documents/Projects/Simulation_of_a_calorimeter_cell/build/Local_test_chic_decays";
-    for (int i = 0; i < 1; ++i){
+    TString Chi_c_data_from_Geant4_with_0dot0X0_dir_path = "/data2/varlamov/projects/AliQuarkonium/batch/Job";
+    for (int i = 0; i < 24; ++i){
         Chi_c_data_from_Geant4_with_0dot0X0->
-            Add(Form("%s/%s", Chi_c_data_from_Geant4_with_0dot0X0_dir_path.Data(), "Calorimeter_energy_edeption_data_0dot0X0.root"));
+            Add(Form("%s%02d/%s", Chi_c_data_from_Geant4_with_0dot0X0_dir_path.Data(), i + 1, "Calorimeter_energy_edeption_data_0dot0X0.root"));
     }
 
     TChain* Chi_c_data_from_Geant4_with_1dot3X0 = new TChain("calorimeter_data");
-    TString Chi_c_data_from_Geant4_with_1dot3X0_dir_path = "/home/antony/Documents/Projects/Simulation_of_a_calorimeter_cell/build/Local_test_chic_decays";
-    for (int i = 0; i < 1; ++i){
+    TString Chi_c_data_from_Geant4_with_1dot3X0_dir_path = "/data2/varlamov/projects/AliQuarkonium/batch/Job";
+    for (int i = 0; i < 24; ++i){
         Chi_c_data_from_Geant4_with_1dot3X0->
-            Add(Form("%s/%s", Chi_c_data_from_Geant4_with_1dot3X0_dir_path.Data(), "Calorimeter_energy_edeption_data_1dot3X0.root"));
+            Add(Form("%s%02d/%s", Chi_c_data_from_Geant4_with_1dot3X0_dir_path.Data(), i + 1, "Calorimeter_energy_edeption_data_1dot3X0.root"));
     }
 
     // TString Cluster_data_for_magnet_and_calorimeter_dir_path = "/home/antony/Documents/Projects/Simulation_of_a_calorimeter_cell/build/Local_test_non_dot_beam_13_08_2023";
@@ -205,12 +207,13 @@ int main(){
     // Kaon_data_handler(final_result, kaon_edepted_energy_tree_chain);
     // Cluster_geometry_research(final_result, Cluster_data_for_separated_calorimeter_chain);
     // Cluster_with_magnet(final_result, Cluster_data_for_magnet_and_calorimeter_chain);
-    // Chi_c_data_from_Geant4_wom_magnet(final_result, Chi_c_data_from_Geant4_with_0dot0X0);
-    Chi_c_data_from_Geant4_wim_magnet(final_result, Chi_c_data_from_Geant4_with_1dot3X0);
+    Chi_c_data_from_Geant4_wom_magnet(final_result, Chi_c_data_from_Geant4_with_0dot0X0);
+    // Chi_c_data_from_Geant4_wim_magnet(final_result, Chi_c_data_from_Geant4_with_1dot3X0);
     
 
     return 0;
 }
+
 
 Double_t CB(Double_t * x, Double_t * par)
     {
@@ -231,6 +234,7 @@ Double_t CB(Double_t * x, Double_t * par)
     }
 }
 
+
 Double_t Energy_edeption_parametrization(Double_t* x, Double_t* p){
     
     Double_t result = CB(x, p) + p[5]*TMath::Landau(x[0], p[6], p[7]);
@@ -249,6 +253,7 @@ void Differential_hist_create(TH1D* input_hist){
 
     return;
 }
+
 
 void Photon_data_handler(TFile* output_data, TChain* input){
 
@@ -397,6 +402,7 @@ void Photon_data_handler(TFile* output_data, TChain* input){
     parameter_depends->Write();
     return;
 }
+
 
 void Electron_data_handler(TFile* output_data, TChain* input){
     /*
@@ -547,6 +553,7 @@ void Electron_data_handler(TFile* output_data, TChain* input){
     return;
 }
 
+
 void Muon_data_handler(TFile* output_data, TChain* input){
 
     output_data->cd();
@@ -649,6 +656,7 @@ void Muon_data_handler(TFile* output_data, TChain* input){
 
     return;
 }
+
 
 void Pion_data_handler(TFile* output_data, TChain* input){
 
@@ -800,6 +808,7 @@ void Pion_data_handler(TFile* output_data, TChain* input){
 
     return;
 }
+
 
 void Proton_data_handler(TFile* output_data, TChain* input){
 
@@ -1021,6 +1030,7 @@ void Proton_data_handler(TFile* output_data, TChain* input){
     return;
 }
 
+
 void Kaon_data_handler(TFile* output_data, TChain* input){
 
     output_data->cd();
@@ -1171,6 +1181,7 @@ void Kaon_data_handler(TFile* output_data, TChain* input){
 
     return;
 }
+
 
 void Cluster_geometry_research(TFile* output_data, TChain* input){
 
@@ -1459,6 +1470,7 @@ void Cluster_geometry_research(TFile* output_data, TChain* input){
     return;
 }
 
+
 void Cluster_with_magnet(TFile* output_data, TChain* input){
 
     const int n_entries = input->GetEntries();
@@ -1744,6 +1756,7 @@ void Cluster_with_magnet(TFile* output_data, TChain* input){
 
     return;
 }
+
 
 void Chi_c_data_from_Geant4_wom_magnet(TFile* output_data, TChain* input){
 
@@ -2145,6 +2158,7 @@ void Chi_c_data_from_Geant4_wom_magnet(TFile* output_data, TChain* input){
     return;
 }
 
+
 void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
 
     double chic0_branching = 0.00083594;
@@ -2226,7 +2240,12 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
 
         const int n_entries = input->GetEntries();
 
-        TH2D** hist = new TH2D*[n_entries];
+        // TH2D** hist = new TH2D*[n_entries];
+        // int cal_size = static_cast<int>(sqrt(cells_energy->size()));
+        int cal_size = 21;
+        TH2D* hist = new TH2D("event_calorimeter_map", "event_calorimeter_map", 
+                              cal_size, -cal_size/2, cal_size/2, 
+                              cal_size, -cal_size/2, cal_size/2);
 
         std::cout << n_entries << "\n";
 
@@ -2289,9 +2308,9 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
             }
 
             int cal_size = static_cast<int>(sqrt(cells_energy->size()));
-            hist[k] = new TH2D(Form("event%06d", k + 1), "event_calorimeter_map", 
-                                cal_size, -cal_size/2, cal_size/2, 
-                                cal_size, -cal_size/2, cal_size/2);
+            // hist[k] = new TH2D(Form("event%06d", k + 1), "event_calorimeter_map", 
+                                // cal_size, -cal_size/2, cal_size/2, 
+                                // cal_size, -cal_size/2, cal_size/2);
             for (int m = 0; m < cells_energy->size(); ++m){
                 int n_pr_opt_photons = 
                     (int)(((*cells_energy)[m]) * opt_electron_rate);
@@ -2305,16 +2324,16 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
                 } else {
                     filled_cells++;
                 }
-                hist[k]->SetBinContent((m)/ cal_size + 1, 
-                                        (m) % cal_size + 1, 
-                                        (*cells_energy)[m]);
+                hist->SetBinContent((m)/ cal_size + 1, 
+                                    (m) % cal_size + 1, 
+                                    (*cells_energy)[m]);
             }
 
-            int max_bin_index = hist[k]->GetMaximumBin();
+            int max_bin_index = hist->GetMaximumBin();
             int cluster_center_x = max_bin_index / cal_size - 1;
             int cluster_center_y = max_bin_index % cal_size - 1;
 
-            double full_event_energy = hist[k]->Integral();
+            double full_event_energy = hist->Integral();
             if (full_event_energy <= 0.1){
                 ++n_empty;
                 continue;
@@ -2323,7 +2342,7 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
             double integral_error = 0;
 
             for (int i = 0; i < 441; ++i){
-                integral_error += hist[k]->GetBinError(i);
+                integral_error += hist->GetBinError(i);
             }
 
             int p = 3;
@@ -2334,7 +2353,7 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
                 for (int r = - (p - 1)/2; r < (p + 1)/2; ++r){
                     // (q, r) -- relative_coords_for_cluster_cell;
                     // w -- cell weight
-                    cluster_energy+=hist[k]->
+                    cluster_energy+=hist->
                         GetBinContent(cluster_center_x + q, 
                         cluster_center_y + r);
                 }
@@ -2405,8 +2424,6 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
             delete posi4m;
             delete gamm4m;
         }
-
-        delete[] hist;
 
         for (int i = 0; i < chic0_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
             chic0_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
