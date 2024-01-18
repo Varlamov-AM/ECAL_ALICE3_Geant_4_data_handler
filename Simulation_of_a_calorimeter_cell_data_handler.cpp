@@ -1809,10 +1809,10 @@ void Chi_c_data_from_Geant4_wom_magnet(TFile* output_data, TChain* input){
 
     output_data->cd();
 
-    TDirectory* Chi_c_data_from_Geant4_wim_dir = (TDirectory*)output_data->GetDirectory("Chi_c_data_from_Geant4_without_magnet");
-    Chi_c_data_from_Geant4_wim_dir->cd();
+    TDirectory* Chi_c_data_from_Geant4_wom_dir = (TDirectory*)output_data->GetDirectory("Chi_c_data_from_Geant4_without_magnet");
+    Chi_c_data_from_Geant4_wom_dir->cd();
 
-    Int_t min_opt_electron_rate = 7;
+    Int_t min_opt_electron_rate = 1;
     Int_t max_opt_electron_rate = 7;
 
     // const double opt_electron_rate = 7; -- energy resolution sigma_E/E \prop 0.02/sqrt(E)
@@ -1824,419 +1824,18 @@ void Chi_c_data_from_Geant4_wom_magnet(TFile* output_data, TChain* input){
     TDirectory* Inv_mass_spectrum_after_simulation[max_opt_electron_rate - min_opt_electron_rate + 1];
     TDirectory* Inv_mass_sep_chic_after_simulation[max_opt_electron_rate - min_opt_electron_rate + 1];
     TDirectory* Energy_distribution_in_cells_chic[max_opt_electron_rate - min_opt_electron_rate + 1];
-    TDirectory* Chic_parameters[max_opt_electron_rate - min_opt_electron_rate + 1];
+    // TDirectory* Chic_parameters[max_opt_electron_rate - min_opt_electron_rate + 1];
 
     for (int opt_electron_rate = min_opt_electron_rate; opt_electron_rate <= max_opt_electron_rate; ++opt_electron_rate){
 
-        opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate] = (TDirectory*)Chi_c_data_from_Geant4_wim_dir->mkdir(Form("Opt_elctron_rate_%1d_per_MeV", opt_electron_rate));        
+        opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate] = (TDirectory*)Chi_c_data_from_Geant4_wom_dir->mkdir(Form("Opt_elctron_rate_%1d_per_MeV", opt_electron_rate));        
         opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->cd();
 
         Inv_mass_spectrum_before_simulation[opt_electron_rate - min_opt_electron_rate] = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_spectrum_before_simulation");
         Inv_mass_spectrum_after_simulation[opt_electron_rate - min_opt_electron_rate]  = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_spectrum_after_simulation");
         Inv_mass_sep_chic_after_simulation[opt_electron_rate - min_opt_electron_rate]  = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_sep_chic_after_simulation");
         Energy_distribution_in_cells_chic[opt_electron_rate - min_opt_electron_rate]   = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Cluster_energy_distribution_in_cells");
-        Chic_parameters[opt_electron_rate - min_opt_electron_rate]                     = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Chic_parameters_pt_depends");
-
-        const int n_entries = input->GetEntries();
-
-        TH2D** hist = new TH2D*[n_entries];
-
-        std::cout << n_entries << "\n";
-
-        std::vector<double> clusters_energy((max_cluster_size - 1)/2, 0.);
-        std::vector<double> clusters_energy_error((max_cluster_size - 1)/2, 0.);
-
-        long long int filled_cells = 0;
-
-        int n_empty = 0;
-
-        TH2D* edepted_energy = new TH2D("edepted_energy", "edepted_energy", 500, 0., 5., 500, 0., 5.);
-
-        TH2D* Jpsi_mass = new TH2D("Jpmin_opt_electron_ratesi_mass", "Jpsi_mass", 100, 2.8, 3.4, 10, 0., 10.);
-        TH2D* Jpsi_mass_with_elec_posi_resolution = new TH2D("Jpsi_mass_with_elec_posi_resolution", "Jpsi_mass_with_elec_posi_resolution", 100, 2.8, 3.4, 10, 0., 10.);
-
-        TH2D* chic_mass_before = new TH2D("chi_c_mass_before", "chi_c_mass_before", 100, 3.3, 3.6, 10, 0., 10.);
-        TH1D* chic_mass_before_slice[chic_mass_before->GetNbinsY()];
-
-        TH2D* chic_mass_with_gamma_resolution = new TH2D("chic_mass_with_gamma_resolution", "chic_mass_with_gamma_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH1D* chic_mass_with_gamma_resolution_slice[chic_mass_with_gamma_resolution->GetNbinsY()];
-
-        TH2D* chic_mass_with_gamma_elec_posi_resolution = new TH2D("chic_mass_with_gamma_elec_posi_resolution", "chic_mass_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH1D* chic_mass_with_gamma_elec_posi_resolution_slice[chic_mass_with_gamma_elec_posi_resolution->GetNbinsY()];
-
-        TH2D* chic_mass_diff_with_gamma_elec_posi_resolution = new TH2D("chic_mass_diff_with_gamma_elec_posi_resolution", "chic_mass_diff_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH1D* chic_mass_diff_with_gamma_elec_posi_resolution_slice[chic_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY()];
-
-        TH2D* chic0_mass_with_gamma_elec_posi_resolution = new TH2D("separate_chic0_mass_with_gamma_elec_posi_resolution", "separate_chic0_mass_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH2D* chic1_mass_with_gamma_elec_posi_resolution = new TH2D("separate_chic1_mass_with_gamma_elec_posi_resolution", "separate_chic1_mass_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH2D* chic2_mass_with_gamma_elec_posi_resolution = new TH2D("separate_chic2_mass_with_gamma_elec_posi_resolution", "separate_chic2_mass_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH1D* chic0_mass_with_gamma_elec_posi_resolution_slice[chic0_mass_with_gamma_elec_posi_resolution->GetNbinsY()];
-        TH1D* chic1_mass_with_gamma_elec_posi_resolution_slice[chic1_mass_with_gamma_elec_posi_resolution->GetNbinsY()];
-        TH1D* chic2_mass_with_gamma_elec_posi_resolution_slice[chic2_mass_with_gamma_elec_posi_resolution->GetNbinsY()];
-
-        TH2D* chic0_mass_diff_with_gamma_elec_posi_resolution = new TH2D("separate_chic0_mass_diff_with_gamma_elec_posi_resolution", "separate_chic0_mass_diff_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH2D* chic1_mass_diff_with_gamma_elec_posi_resolution = new TH2D("separate_chic1_mass_diff_with_gamma_elec_posi_resolution", "separate_chic1_mass_diff_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH2D* chic2_mass_diff_with_gamma_elec_posi_resolution = new TH2D("separate_chic2_mass_diff_with_gamma_elec_posi_resolution", "separate_chic2_mass_diff_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
-        TH1D* chic0_mass_diff_with_gamma_elec_posi_resolution_slice[chic0_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY()];
-        TH1D* chic1_mass_diff_with_gamma_elec_posi_resolution_slice[chic1_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY()];
-        TH1D* chic2_mass_diff_with_gamma_elec_posi_resolution_slice[chic2_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY()];
-
-        TH1D* mass_chic0_pt_depends = new TH1D("mass_chic0_pt_depends", "mass_chic0_pt_depends", 10, -0.5, 10.5);
-        TH1D* mass_chic1_pt_depends = new TH1D("mass_chic1_pt_depends", "mass_chic1_pt_depends", 10, -0.5, 10.5);
-        TH1D* mass_chic2_pt_depends = new TH1D("mass_chic2_pt_depends", "mass_chic2_pt_depends", 10, -0.5, 10.5);
-
-        TH1D* sigma_chic0_pt_depends = new TH1D("sigma_chic0_pt_depends", "sigma_chic0_pt_depends", 10, -0.5, 10.5);
-        TH1D* sigma_chic1_pt_depends = new TH1D("sigma_chic1_pt_depends", "sigma_chic1_pt_depends", 10, -0.5, 10.5);
-        TH1D* sigma_chic2_pt_depends = new TH1D("sigma_chic2_pt_depends", "sigma_chic2_pt_depends", 10, -0.5, 10.5);
-
-        TH1D* efficiency_chic0_pt_depends = new TH1D("efficiency_chic0_pt_depends", "efficiency_chic0_pt_depends", 10, -0.5, 10.5);
-        TH1D* efficiency_chic1_pt_depends = new TH1D("efficiency_chic1_pt_depends", "efficiency_chic1_pt_depends", 10, -0.5, 10.5);
-        TH1D* efficiency_chic2_pt_depends = new TH1D("efficiency_chic2_pt_depends", "efficiency_chic2_pt_depends", 10, -0.5, 10.5);
-
-        for (int k = 0; k < n_entries/100; ++k){
-            input->GetEntry(k);
-
-            if (k % 10000 == 0){
-                std::cout << 
-                    Form("k = %09d in %d\n", k, n_entries);
-            }
-
-            int cal_size = static_cast<int>(sqrt(cells_energy->size()));
-            hist[k] = new TH2D(Form("event%06d", k + 1), "event_calorimeter_map", 
-                                cal_size, -cal_size/2, cal_size/2, 
-                                cal_size, -cal_size/2, cal_size/2);
-            for (int m = 0; m < cells_energy->size(); ++m){
-                int n_pr_opt_photons = 
-                    (int)(((*cells_energy)[m]) * opt_electron_rate);
-                int n_sm_opt_photons = 
-                    (int)gRandom->Poisson(n_pr_opt_photons);
-                n_sm_opt_photons = 
-                    (int)gRandom->Gaus(n_sm_opt_photons, 0.007*n_sm_opt_photons);
-                (*cells_energy)[m] = n_sm_opt_photons / opt_electron_rate;
-                if ((*cells_energy)[m] <= 4){
-                    (*cells_energy)[m] = 0;
-                } else {
-                    filled_cells++;
-                }
-                hist[k]->SetBinContent((m)/ cal_size + 1, 
-                                        (m) % cal_size + 1, 
-                                        (*cells_energy)[m]);
-            }
-
-            int max_bin_index = hist[k]->GetMaximumBin();
-            int cluster_center_x = max_bin_index / cal_size - 1;
-            int cluster_center_y = max_bin_index % cal_size - 1;
-
-            double full_event_energy = hist[k]->Integral();
-            if (full_event_energy <= 0.1){
-                ++n_empty;
-                continue;
-            }
-
-            double integral_error = 0;
-
-            for (int i = 0; i < 441; ++i){
-                integral_error += hist[k]->GetBinError(i);
-            }
-
-            int p = 3;
-            double x_cm = 0;
-            double weight_sum = 0;
-            double cluster_energy = 0;
-            for (int q = - (p - 1)/2; q < (p + 1)/2; ++q){
-                for (int r = - (p - 1)/2; r < (p + 1)/2; ++r){
-                    // (q, r) -- relative_coords_for_cluster_cell;
-                    // w -- cell weight
-                    cluster_energy+=hist[k]->
-                        GetBinContent(cluster_center_x + q, 
-                        cluster_center_y + r);
-                }
-            }
-               
-            edepted_energy->
-                Fill(true_energy/1000., cluster_energy/1000);
-            
-            TLorentzVector* elec4m = new TLorentzVector(electron_px, electron_py, electron_pz, electron_p0);
-            TLorentzVector* posi4m = new TLorentzVector(positron_px, positron_py, positron_pz, positron_p0);
-            TLorentzVector* gamm4m = new TLorentzVector(gamma_px, gamma_py, gamma_pz, gamma_p0);
-
-            Jpsi_mass->Fill((*elec4m + *posi4m).M(), (*elec4m + *posi4m).Pt());
-            chic_mass_before->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-            
-            Double_t p_gamma = gamm4m->P();
-            
-            gamm4m->SetPx(gamm4m->Px() * cluster_energy/(1000 * gamm4m->E()));
-            gamm4m->SetPy(gamm4m->Py() * cluster_energy/(1000 * gamm4m->E()));
-            gamm4m->SetPz(gamm4m->Pz() * cluster_energy/(1000 * gamm4m->E()));
-            gamm4m->SetE(cluster_energy/1000);
-
-            chic_mass_with_gamma_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-
-            Double_t p_elec = elec4m->P();
-            Double_t ep_mass = elec4m->M();
-
-            Double_t sigma_p_elec = p_elec * 0.015;
-
-            Double_t smeared_p_elec = gRandom->Gaus(p_elec, sigma_p_elec);
-
-            elec4m->SetPx(elec4m->Px() * smeared_p_elec/p_elec);
-            elec4m->SetPy(elec4m->Py() * smeared_p_elec/p_elec);
-            elec4m->SetPz(elec4m->Pz() * smeared_p_elec/p_elec);
-
-            elec4m->SetE(TMath::Sqrt(ep_mass * ep_mass + smeared_p_elec * smeared_p_elec));
-
-
-            Double_t p_posi = posi4m->P();
-            ep_mass = posi4m->M();
-
-            Double_t sigma_p_posi = p_posi * 0.015;
-            
-            Double_t smeared_p_posi = gRandom->Gaus(p_posi, sigma_p_posi);
-
-            posi4m->SetPx(posi4m->Px() * smeared_p_posi/p_posi);
-            posi4m->SetPy(posi4m->Py() * smeared_p_posi/p_posi);
-            posi4m->SetPz(posi4m->Pz() * smeared_p_posi/p_posi);
-
-            posi4m->SetE(TMath::Sqrt(ep_mass * ep_mass + smeared_p_posi * smeared_p_posi));
-
-            Jpsi_mass_with_elec_posi_resolution->Fill((*elec4m + *posi4m).M(), (*elec4m + *posi4m).Pt());
-            chic_mass_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-            chic_mass_diff_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M() - (*elec4m + *posi4m).M() + 3.096, (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-
-            if (fabs(branchings - chic0_branching) < 0.00001){
-                chic0_mass_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-                chic0_mass_diff_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M() - (*elec4m + *posi4m).M() + 3.096, (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-            } else if (fabs(branchings - chic1_branching) < 0.00001){
-                chic1_mass_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-                chic1_mass_diff_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M() - (*elec4m + *posi4m).M() + 3.096, (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-            } else if (fabs(branchings - chic2_branching) < 0.00001) {
-                chic2_mass_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-                chic2_mass_diff_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M() - (*elec4m + *posi4m).M() + 3.096, (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
-            }
-
-            delete elec4m;
-            delete posi4m;
-            delete gamm4m;
-        }
-
-        delete[] hist;
-
-        for (int i = 0; i < chic0_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic0_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(0, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic0_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic0_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-        }
-
-        for (int i = 0; i < chic0_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(0, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-            mass_chic0_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
-            mass_chic0_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
-            sigma_chic0_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
-            sigma_chic0_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
-            efficiency_chic0_pt_depends->SetBinContent(i + 1, (chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
-        }
-
-        for (int i = 0; i < chic1_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic1_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic1_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic1_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(1, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic1_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic1_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-        }
-
-        for (int i = 0; i < chic1_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic1_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic1_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(1, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-            mass_chic1_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
-            mass_chic1_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
-            sigma_chic1_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
-            sigma_chic1_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
-            efficiency_chic1_pt_depends->SetBinContent(i + 1, (chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
-        }
-
-        for (int i = 0; i < chic2_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic2_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic2_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic2_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(1, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic2_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic2_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-            
-        }
-
-        for (int i = 0; i < chic2_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic2_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic2_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(1, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-            mass_chic2_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
-            mass_chic2_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
-            sigma_chic2_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
-            sigma_chic2_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
-            // efficiency_chic2_pt_depends->SetBinContent(i + 1, gaus->Integral(gaus->GetParameter(1) - 5 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2))/(chic2_branching * chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral()));
-            // efficiency_chic2_pt_depends->SetBinError(i + 1, gaus->IntegralError(gaus->GetParameter(1) - 5 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2))/(chic2_branching * chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral()));
-            efficiency_chic2_pt_depends->SetBinContent(i + 1, (chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
-        }
-
-        output_data->cd(); 
-
-        
-        opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->cd();
-
-        Inv_mass_spectrum_before_simulation[opt_electron_rate - min_opt_electron_rate]->cd();
-        Jpsi_mass->Write();
-        chic_mass_before->Write();
-
-        Inv_mass_spectrum_after_simulation[opt_electron_rate - min_opt_electron_rate]->cd();
-        chic_mass_with_gamma_resolution->Write();
-        chic_mass_with_gamma_elec_posi_resolution->Write();
-        chic_mass_diff_with_gamma_elec_posi_resolution->Write();
-
-        Inv_mass_sep_chic_after_simulation[opt_electron_rate - min_opt_electron_rate]->cd();
-        chic0_mass_with_gamma_elec_posi_resolution->Write();
-        chic1_mass_with_gamma_elec_posi_resolution->Write();
-        chic2_mass_with_gamma_elec_posi_resolution->Write();
-        chic0_mass_diff_with_gamma_elec_posi_resolution->Write();
-        chic1_mass_diff_with_gamma_elec_posi_resolution->Write();
-        chic2_mass_diff_with_gamma_elec_posi_resolution->Write();
-
-
-        for (auto slice_chic0_mass_diff : chic0_mass_diff_with_gamma_elec_posi_resolution_slice){
-            slice_chic0_mass_diff->Write();
-        }
-        for (auto slice_chic1_mass_diff : chic1_mass_diff_with_gamma_elec_posi_resolution_slice){
-            slice_chic1_mass_diff->Write();
-        }
-        for (auto slice_chic2_mass_diff : chic2_mass_diff_with_gamma_elec_posi_resolution_slice){
-            slice_chic2_mass_diff->Write();
-        }
-
-        Chic_parameters[opt_electron_rate - min_opt_electron_rate]->cd();
-        mass_chic0_pt_depends->Write();
-        sigma_chic0_pt_depends->Write();
-        efficiency_chic0_pt_depends->Write();
-        mass_chic1_pt_depends->Write();
-        sigma_chic1_pt_depends->Write();
-        efficiency_chic1_pt_depends->Write();
-        mass_chic2_pt_depends->Write();
-        sigma_chic2_pt_depends->Write();
-        efficiency_chic2_pt_depends->Write();
-
-        
-        Energy_distribution_in_cells_chic[opt_electron_rate - min_opt_electron_rate]->cd();
-        edepted_energy->Write();
-        
-    }
-
-    return;
-}
-
-
-void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
-
-    double chic0_branching = 0.00083594;
-    double chic1_branching = 0.0204805;
-    double chic2_branching = 0.0113449;
-
-    std::vector<double>* cells_energy = 0;
-    double true_energy = 0;
-
-    double electron_px = 0;
-    double electron_py = 0;
-    double electron_pz = 0;
-    double electron_p0 = 0;
-
-    double positron_px = 0;
-    double positron_py = 0;
-    double positron_pz = 0;
-    double positron_p0 = 0;
-
-    double gamma_px = 0;
-    double gamma_py = 0;
-    double gamma_pz = 0;
-    double gamma_p0 = 0;
-
-    double chi_c_mass_before_rotating = 0;
-    double chi_c_pt_before_rotating = 0;
-
-    double branchings = 0;
-
-    int max_cluster_size = 11;
-
-    input->SetBranchAddress("cell_energy", &cells_energy);
-    input->SetBranchAddress("electron_px", &electron_px);
-    input->SetBranchAddress("electron_py", &electron_py);
-    input->SetBranchAddress("electron_pz", &electron_pz);
-    input->SetBranchAddress("electron_p0", &electron_p0);
-    input->SetBranchAddress("positron_px", &positron_px);
-    input->SetBranchAddress("positron_py", &positron_py);
-    input->SetBranchAddress("positron_pz", &positron_pz);
-    input->SetBranchAddress("positron_p0", &positron_p0);
-    input->SetBranchAddress("gamma_px", &gamma_px);
-    input->SetBranchAddress("gamma_py", &gamma_py);
-    input->SetBranchAddress("gamma_pz", &gamma_pz);
-    input->SetBranchAddress("gamma_p0", &gamma_p0);
-    input->SetBranchAddress("chi_c_mass_before_rotating", &chi_c_mass_before_rotating);
-    input->SetBranchAddress("chi_c_pt_before_rotating", &chi_c_pt_before_rotating);
-    input->SetBranchAddress("event_branching", &branchings);
-    input->SetBranchAddress("initial_particle_energy", &true_energy);
-
-    output_data->cd();
-
-    TDirectory* Chi_c_data_from_Geant4_wim_dir = (TDirectory*)output_data->GetDirectory("Chi_c_data_from_Geant4_with_magnet");
-    Chi_c_data_from_Geant4_wim_dir->cd();
-
-    Int_t min_opt_electron_rate = 7;
-    Int_t max_opt_electron_rate = 7;
-
-    // const double opt_electron_rate = 7; -- energy resolution sigma_E/E \prop 0.02/sqrt(E)
-    // const double opt_electron_rate = 1.1; -- energy resolution sigma_E/E \sim to PHOS
-
-    TDirectory* opt_electron_rate_dir[max_opt_electron_rate - min_opt_electron_rate + 1];
-
-    TDirectory* Inv_mass_spectrum_before_simulation[max_opt_electron_rate - min_opt_electron_rate + 1];
-    TDirectory* Inv_mass_spectrum_after_simulation[max_opt_electron_rate - min_opt_electron_rate + 1];
-    TDirectory* Inv_mass_sep_chic_after_simulation[max_opt_electron_rate - min_opt_electron_rate + 1];
-    TDirectory* Energy_distribution_in_cells_chic[max_opt_electron_rate - min_opt_electron_rate + 1];
-    TDirectory* Chic_parameters[max_opt_electron_rate - min_opt_electron_rate + 1];
-
-    for (int opt_electron_rate = min_opt_electron_rate; opt_electron_rate <= max_opt_electron_rate; ++opt_electron_rate){
-
-        opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate] = (TDirectory*)Chi_c_data_from_Geant4_wim_dir->mkdir(Form("Opt_elctron_rate_%1d_per_MeV", opt_electron_rate));        
-        opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->cd();
-
-        Inv_mass_spectrum_before_simulation[opt_electron_rate - min_opt_electron_rate] = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_spectrum_before_simulation");
-        Inv_mass_spectrum_after_simulation[opt_electron_rate - min_opt_electron_rate]  = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_spectrum_after_simulation");
-        Inv_mass_sep_chic_after_simulation[opt_electron_rate - min_opt_electron_rate]  = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_sep_chic_after_simulation");
-        Energy_distribution_in_cells_chic[opt_electron_rate - min_opt_electron_rate]   = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Cluster_energy_distribution_in_cells");
-        Chic_parameters[opt_electron_rate - min_opt_electron_rate]                     = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Chic_parameters_pt_depends");
+        // Chic_parameters[opt_electron_rate - min_opt_electron_rate]                     = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Chic_parameters_pt_depends");
 
         const int n_entries = input->GetEntries();
 
@@ -2304,7 +1903,7 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
 
             if (k % 10000 == 0){
                 std::cout << 
-                    Form("k = %06d in %d\n", k, n_entries);
+                    Form("k = %09d in %d\n", k, n_entries);
             }
 
             int cal_size = static_cast<int>(sqrt(cells_energy->size()));
@@ -2425,89 +2024,89 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
             delete gamm4m;
         }
 
-        for (int i = 0; i < chic0_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic0_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(0, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic0_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic0_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-        }
+        // for (int i = 0; i < chic0_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic0_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(0, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic0_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic0_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        // }
 
-        for (int i = 0; i < chic0_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(0, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-            mass_chic0_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
-            mass_chic0_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
-            sigma_chic0_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
-            sigma_chic0_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
-            efficiency_chic0_pt_depends->SetBinContent(i + 1, (chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
-        }
+        // for (int i = 0; i < chic0_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(0, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        //     mass_chic0_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
+        //     mass_chic0_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
+        //     sigma_chic0_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
+        //     sigma_chic0_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
+        //     efficiency_chic0_pt_depends->SetBinContent(i + 1, (chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
+        // }
 
-        for (int i = 0; i < chic1_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic1_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic1_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic1_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(1, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic1_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic1_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-        }
+        // for (int i = 0; i < chic1_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic1_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic1_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic1_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(1, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic1_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic1_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        // }
 
-        for (int i = 0; i < chic1_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic1_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic1_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(1, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-            mass_chic1_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
-            mass_chic1_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
-            sigma_chic1_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
-            sigma_chic1_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
-            efficiency_chic1_pt_depends->SetBinContent(i + 1, (chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
-        }
+        // for (int i = 0; i < chic1_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic1_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic1_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(1, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        //     mass_chic1_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
+        //     mass_chic1_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
+        //     sigma_chic1_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
+        //     sigma_chic1_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
+        //     efficiency_chic1_pt_depends->SetBinContent(i + 1, (chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
+        // }
 
-        for (int i = 0; i < chic2_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic2_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic2_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic2_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(1, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic2_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic2_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        // for (int i = 0; i < chic2_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic2_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic2_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic2_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(1, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic2_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic2_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
             
-        }
+        // }
 
-        for (int i = 0; i < chic2_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
-            chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic2_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic2_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
-            TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
-            gaus->SetParameter(1, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
-            gaus->SetParameter(1, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
-            gaus->SetParameter(2, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
-            gaus->SetParLimits(2, 0., 1.);
-            chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
-            chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
-            mass_chic2_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
-            mass_chic2_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
-            sigma_chic2_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
-            sigma_chic2_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
-            // efficiency_chic2_pt_depends->SetBinContent(i + 1, gaus->Integral(gaus->GetParameter(1) - 5 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2))/(chic2_branching * chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral()));
-            // efficiency_chic2_pt_depends->SetBinError(i + 1, gaus->IntegralError(gaus->GetParameter(1) - 5 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2))/(chic2_branching * chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral()));
-            efficiency_chic2_pt_depends->SetBinContent(i + 1, (chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
-        }
+        // for (int i = 0; i < chic2_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic2_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic2_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(1, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        //     mass_chic2_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
+        //     mass_chic2_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
+        //     sigma_chic2_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
+        //     sigma_chic2_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
+        //     // efficiency_chic2_pt_depends->SetBinContent(i + 1, gaus->Integral(gaus->GetParameter(1) - 5 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2))/(chic2_branching * chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral()));
+        //     // efficiency_chic2_pt_depends->SetBinError(i + 1, gaus->IntegralError(gaus->GetParameter(1) - 5 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2))/(chic2_branching * chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral()));
+        //     efficiency_chic2_pt_depends->SetBinContent(i + 1, (chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
+        // }
 
         output_data->cd(); 
 
@@ -2532,26 +2131,430 @@ void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
         chic2_mass_diff_with_gamma_elec_posi_resolution->Write();
 
 
-        for (auto slice_chic0_mass_diff : chic0_mass_diff_with_gamma_elec_posi_resolution_slice){
-            slice_chic0_mass_diff->Write();
-        }
-        for (auto slice_chic1_mass_diff : chic1_mass_diff_with_gamma_elec_posi_resolution_slice){
-            slice_chic1_mass_diff->Write();
-        }
-        for (auto slice_chic2_mass_diff : chic2_mass_diff_with_gamma_elec_posi_resolution_slice){
-            slice_chic2_mass_diff->Write();
+        // for (auto slice_chic0_mass_diff : chic0_mass_diff_with_gamma_elec_posi_resolution_slice){
+        //     slice_chic0_mass_diff->Write();
+        // }
+        // for (auto slice_chic1_mass_diff : chic1_mass_diff_with_gamma_elec_posi_resolution_slice){
+        //     slice_chic1_mass_diff->Write();
+        // }
+        // for (auto slice_chic2_mass_diff : chic2_mass_diff_with_gamma_elec_posi_resolution_slice){
+        //     slice_chic2_mass_diff->Write();
+        // }
+
+        // Chic_parameters[opt_electron_rate - min_opt_electron_rate]->cd();
+        // mass_chic0_pt_depends->Write();
+        // sigma_chic0_pt_depends->Write();
+        // efficiency_chic0_pt_depends->Write();
+        // mass_chic1_pt_depends->Write();
+        // sigma_chic1_pt_depends->Write();
+        // efficiency_chic1_pt_depends->Write();
+        // mass_chic2_pt_depends->Write();
+        // sigma_chic2_pt_depends->Write();
+        // efficiency_chic2_pt_depends->Write();
+
+        
+        Energy_distribution_in_cells_chic[opt_electron_rate - min_opt_electron_rate]->cd();
+        edepted_energy->Write();
+        
+    }
+
+    return;
+}
+
+
+void Chi_c_data_from_Geant4_wim_magnet(TFile* output_data, TChain* input){
+
+    double chic0_branching = 0.00083594;
+    double chic1_branching = 0.0204805;
+    double chic2_branching = 0.0113449;
+
+    std::vector<double>* cells_energy = 0;
+    double true_energy = 0;
+
+    double electron_px = 0;
+    double electron_py = 0;
+    double electron_pz = 0;
+    double electron_p0 = 0;
+
+    double positron_px = 0;
+    double positron_py = 0;
+    double positron_pz = 0;
+    double positron_p0 = 0;
+
+    double gamma_px = 0;
+    double gamma_py = 0;
+    double gamma_pz = 0;
+    double gamma_p0 = 0;
+
+    double chi_c_mass_before_rotating = 0;
+    double chi_c_pt_before_rotating = 0;
+
+    double branchings = 0;
+
+    int max_cluster_size = 11;
+
+    input->SetBranchAddress("cell_energy", &cells_energy);
+    input->SetBranchAddress("electron_px", &electron_px);
+    input->SetBranchAddress("electron_py", &electron_py);
+    input->SetBranchAddress("electron_pz", &electron_pz);
+    input->SetBranchAddress("electron_p0", &electron_p0);
+    input->SetBranchAddress("positron_px", &positron_px);
+    input->SetBranchAddress("positron_py", &positron_py);
+    input->SetBranchAddress("positron_pz", &positron_pz);
+    input->SetBranchAddress("positron_p0", &positron_p0);
+    input->SetBranchAddress("gamma_px", &gamma_px);
+    input->SetBranchAddress("gamma_py", &gamma_py);
+    input->SetBranchAddress("gamma_pz", &gamma_pz);
+    input->SetBranchAddress("gamma_p0", &gamma_p0);
+    input->SetBranchAddress("chi_c_mass_before_rotating", &chi_c_mass_before_rotating);
+    input->SetBranchAddress("chi_c_pt_before_rotating", &chi_c_pt_before_rotating);
+    input->SetBranchAddress("event_branching", &branchings);
+    input->SetBranchAddress("initial_particle_energy", &true_energy);
+
+    output_data->cd();
+
+    TDirectory* Chi_c_data_from_Geant4_wim_dir = (TDirectory*)output_data->GetDirectory("Chi_c_data_from_Geant4_with_magnet");
+    Chi_c_data_from_Geant4_wim_dir->cd();
+
+    Int_t min_opt_electron_rate = 1;
+    Int_t max_opt_electron_rate = 7;
+
+    // const double opt_electron_rate = 7; -- energy resolution sigma_E/E \prop 0.02/sqrt(E)
+    // const double opt_electron_rate = 1.1; -- energy resolution sigma_E/E \sim to PHOS
+
+    TDirectory* opt_electron_rate_dir[max_opt_electron_rate - min_opt_electron_rate + 1];
+
+    TDirectory* Inv_mass_spectrum_before_simulation[max_opt_electron_rate - min_opt_electron_rate + 1];
+    TDirectory* Inv_mass_spectrum_after_simulation[max_opt_electron_rate - min_opt_electron_rate + 1];
+    TDirectory* Inv_mass_sep_chic_after_simulation[max_opt_electron_rate - min_opt_electron_rate + 1];
+    TDirectory* Energy_distribution_in_cells_chic[max_opt_electron_rate - min_opt_electron_rate + 1];
+    // TDirectory* Chic_parameters[max_opt_electron_rate - min_opt_electron_rate + 1];
+
+    for (int opt_electron_rate = min_opt_electron_rate; opt_electron_rate <= max_opt_electron_rate; ++opt_electron_rate){
+
+        opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate] = (TDirectory*)Chi_c_data_from_Geant4_wim_dir->mkdir(Form("Opt_elctron_rate_%1d_per_MeV", opt_electron_rate));        
+        opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->cd();
+
+        Inv_mass_spectrum_before_simulation[opt_electron_rate - min_opt_electron_rate] = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_spectrum_before_simulation");
+        Inv_mass_spectrum_after_simulation[opt_electron_rate - min_opt_electron_rate]  = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_spectrum_after_simulation");
+        Inv_mass_sep_chic_after_simulation[opt_electron_rate - min_opt_electron_rate]  = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Inv_mass_sep_chic_after_simulation");
+        Energy_distribution_in_cells_chic[opt_electron_rate - min_opt_electron_rate]   = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Cluster_energy_distribution_in_cells");
+        // Chic_parameters[opt_electron_rate - min_opt_electron_rate]                     = (TDirectory*)opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->mkdir("Chic_parameters_pt_depends");
+
+        const int n_entries = input->GetEntries();
+
+        // TH2D** hist = new TH2D*[n_entries];
+        // int cal_size = static_cast<int>(sqrt(cells_energy->size()));
+        int cal_size = 21;
+        TH2D* hist = new TH2D("event_calorimeter_map", "event_calorimeter_map", 
+                              cal_size, -cal_size/2, cal_size/2, 
+                              cal_size, -cal_size/2, cal_size/2);
+
+        std::cout << n_entries << "\n";
+
+        std::vector<double> clusters_energy((max_cluster_size - 1)/2, 0.);
+        std::vector<double> clusters_energy_error((max_cluster_size - 1)/2, 0.);
+
+        long long int filled_cells = 0;
+
+        int n_empty = 0;
+
+        TH2D* edepted_energy = new TH2D("edepted_energy", "edepted_energy", 500, 0., 5., 500, 0., 5.);
+
+        TH2D* Jpsi_mass = new TH2D("Jpmin_opt_electron_ratesi_mass", "Jpsi_mass", 100, 2.8, 3.4, 10, 0., 10.);
+        TH2D* Jpsi_mass_with_elec_posi_resolution = new TH2D("Jpsi_mass_with_elec_posi_resolution", "Jpsi_mass_with_elec_posi_resolution", 100, 2.8, 3.4, 10, 0., 10.);
+
+        TH2D* chic_mass_before = new TH2D("chi_c_mass_before", "chi_c_mass_before", 100, 3.3, 3.6, 10, 0., 10.);
+        TH1D* chic_mass_before_slice[chic_mass_before->GetNbinsY()];
+
+        TH2D* chic_mass_with_gamma_resolution = new TH2D("chic_mass_with_gamma_resolution", "chic_mass_with_gamma_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH1D* chic_mass_with_gamma_resolution_slice[chic_mass_with_gamma_resolution->GetNbinsY()];
+
+        TH2D* chic_mass_with_gamma_elec_posi_resolution = new TH2D("chic_mass_with_gamma_elec_posi_resolution", "chic_mass_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH1D* chic_mass_with_gamma_elec_posi_resolution_slice[chic_mass_with_gamma_elec_posi_resolution->GetNbinsY()];
+
+        TH2D* chic_mass_diff_with_gamma_elec_posi_resolution = new TH2D("chic_mass_diff_with_gamma_elec_posi_resolution", "chic_mass_diff_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH1D* chic_mass_diff_with_gamma_elec_posi_resolution_slice[chic_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY()];
+
+        TH2D* chic0_mass_with_gamma_elec_posi_resolution = new TH2D("separate_chic0_mass_with_gamma_elec_posi_resolution", "separate_chic0_mass_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH2D* chic1_mass_with_gamma_elec_posi_resolution = new TH2D("separate_chic1_mass_with_gamma_elec_posi_resolution", "separate_chic1_mass_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH2D* chic2_mass_with_gamma_elec_posi_resolution = new TH2D("separate_chic2_mass_with_gamma_elec_posi_resolution", "separate_chic2_mass_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH1D* chic0_mass_with_gamma_elec_posi_resolution_slice[chic0_mass_with_gamma_elec_posi_resolution->GetNbinsY()];
+        TH1D* chic1_mass_with_gamma_elec_posi_resolution_slice[chic1_mass_with_gamma_elec_posi_resolution->GetNbinsY()];
+        TH1D* chic2_mass_with_gamma_elec_posi_resolution_slice[chic2_mass_with_gamma_elec_posi_resolution->GetNbinsY()];
+
+        TH2D* chic0_mass_diff_with_gamma_elec_posi_resolution = new TH2D("separate_chic0_mass_diff_with_gamma_elec_posi_resolution", "separate_chic0_mass_diff_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH2D* chic1_mass_diff_with_gamma_elec_posi_resolution = new TH2D("separate_chic1_mass_diff_with_gamma_elec_posi_resolution", "separate_chic1_mass_diff_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH2D* chic2_mass_diff_with_gamma_elec_posi_resolution = new TH2D("separate_chic2_mass_diff_with_gamma_elec_posi_resolution", "separate_chic2_mass_diff_with_gamma_elec_posi_resolution", 100, 3.3, 3.6, 10, 0., 10.);
+        TH1D* chic0_mass_diff_with_gamma_elec_posi_resolution_slice[chic0_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY()];
+        TH1D* chic1_mass_diff_with_gamma_elec_posi_resolution_slice[chic1_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY()];
+        TH1D* chic2_mass_diff_with_gamma_elec_posi_resolution_slice[chic2_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY()];
+
+        TH1D* mass_chic0_pt_depends = new TH1D("mass_chic0_pt_depends", "mass_chic0_pt_depends", 10, -0.5, 10.5);
+        TH1D* mass_chic1_pt_depends = new TH1D("mass_chic1_pt_depends", "mass_chic1_pt_depends", 10, -0.5, 10.5);
+        TH1D* mass_chic2_pt_depends = new TH1D("mass_chic2_pt_depends", "mass_chic2_pt_depends", 10, -0.5, 10.5);
+
+        TH1D* sigma_chic0_pt_depends = new TH1D("sigma_chic0_pt_depends", "sigma_chic0_pt_depends", 10, -0.5, 10.5);
+        TH1D* sigma_chic1_pt_depends = new TH1D("sigma_chic1_pt_depends", "sigma_chic1_pt_depends", 10, -0.5, 10.5);
+        TH1D* sigma_chic2_pt_depends = new TH1D("sigma_chic2_pt_depends", "sigma_chic2_pt_depends", 10, -0.5, 10.5);
+
+        TH1D* efficiency_chic0_pt_depends = new TH1D("efficiency_chic0_pt_depends", "efficiency_chic0_pt_depends", 10, -0.5, 10.5);
+        TH1D* efficiency_chic1_pt_depends = new TH1D("efficiency_chic1_pt_depends", "efficiency_chic1_pt_depends", 10, -0.5, 10.5);
+        TH1D* efficiency_chic2_pt_depends = new TH1D("efficiency_chic2_pt_depends", "efficiency_chic2_pt_depends", 10, -0.5, 10.5);
+
+        for (int k = 0; k < n_entries; ++k){
+            input->GetEntry(k);
+
+            if (k % 10000 == 0){
+                std::cout << 
+                    Form("k = %09d in %d\n", k, n_entries);
+            }
+
+            int cal_size = static_cast<int>(sqrt(cells_energy->size()));
+            // hist[k] = new TH2D(Form("event%06d", k + 1), "event_calorimeter_map", 
+                                // cal_size, -cal_size/2, cal_size/2, 
+                                // cal_size, -cal_size/2, cal_size/2);
+            for (int m = 0; m < cells_energy->size(); ++m){
+                int n_pr_opt_photons = 
+                    (int)(((*cells_energy)[m]) * opt_electron_rate);
+                int n_sm_opt_photons = 
+                    (int)gRandom->Poisson(n_pr_opt_photons);
+                n_sm_opt_photons = 
+                    (int)gRandom->Gaus(n_sm_opt_photons, 0.007*n_sm_opt_photons);
+                (*cells_energy)[m] = n_sm_opt_photons / opt_electron_rate;
+                if ((*cells_energy)[m] <= 4){
+                    (*cells_energy)[m] = 0;
+                } else {
+                    filled_cells++;
+                }
+                hist->SetBinContent((m)/ cal_size + 1, 
+                                    (m) % cal_size + 1, 
+                                    (*cells_energy)[m]);
+            }
+
+            int max_bin_index = hist->GetMaximumBin();
+            int cluster_center_x = max_bin_index / cal_size - 1;
+            int cluster_center_y = max_bin_index % cal_size - 1;
+
+            double full_event_energy = hist->Integral();
+            if (full_event_energy <= 0.1){
+                ++n_empty;
+                continue;
+            }
+
+            double integral_error = 0;
+
+            for (int i = 0; i < 441; ++i){
+                integral_error += hist->GetBinError(i);
+            }
+
+            int p = 3;
+            double x_cm = 0;
+            double weight_sum = 0;
+            double cluster_energy = 0;
+            for (int q = - (p - 1)/2; q < (p + 1)/2; ++q){
+                for (int r = - (p - 1)/2; r < (p + 1)/2; ++r){
+                    // (q, r) -- relative_coords_for_cluster_cell;
+                    // w -- cell weight
+                    cluster_energy+=hist->
+                        GetBinContent(cluster_center_x + q, 
+                        cluster_center_y + r);
+                }
+            }
+               
+            edepted_energy->
+                Fill(true_energy/1000., cluster_energy/1000);
+            
+            TLorentzVector* elec4m = new TLorentzVector(electron_px, electron_py, electron_pz, electron_p0);
+            TLorentzVector* posi4m = new TLorentzVector(positron_px, positron_py, positron_pz, positron_p0);
+            TLorentzVector* gamm4m = new TLorentzVector(gamma_px, gamma_py, gamma_pz, gamma_p0);
+
+            Jpsi_mass->Fill((*elec4m + *posi4m).M(), (*elec4m + *posi4m).Pt());
+            chic_mass_before->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+            
+            Double_t p_gamma = gamm4m->P();
+            
+            gamm4m->SetPx(gamm4m->Px() * cluster_energy/(1000 * gamm4m->E()));
+            gamm4m->SetPy(gamm4m->Py() * cluster_energy/(1000 * gamm4m->E()));
+            gamm4m->SetPz(gamm4m->Pz() * cluster_energy/(1000 * gamm4m->E()));
+            gamm4m->SetE(cluster_energy/1000);
+
+            chic_mass_with_gamma_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+
+            Double_t p_elec = elec4m->P();
+            Double_t ep_mass = elec4m->M();
+
+            Double_t sigma_p_elec = p_elec * 0.015;
+
+            Double_t smeared_p_elec = gRandom->Gaus(p_elec, sigma_p_elec);
+
+            elec4m->SetPx(elec4m->Px() * smeared_p_elec/p_elec);
+            elec4m->SetPy(elec4m->Py() * smeared_p_elec/p_elec);
+            elec4m->SetPz(elec4m->Pz() * smeared_p_elec/p_elec);
+
+            elec4m->SetE(TMath::Sqrt(ep_mass * ep_mass + smeared_p_elec * smeared_p_elec));
+
+
+            Double_t p_posi = posi4m->P();
+            ep_mass = posi4m->M();
+
+            Double_t sigma_p_posi = p_posi * 0.015;
+            
+            Double_t smeared_p_posi = gRandom->Gaus(p_posi, sigma_p_posi);
+
+            posi4m->SetPx(posi4m->Px() * smeared_p_posi/p_posi);
+            posi4m->SetPy(posi4m->Py() * smeared_p_posi/p_posi);
+            posi4m->SetPz(posi4m->Pz() * smeared_p_posi/p_posi);
+
+            posi4m->SetE(TMath::Sqrt(ep_mass * ep_mass + smeared_p_posi * smeared_p_posi));
+
+            Jpsi_mass_with_elec_posi_resolution->Fill((*elec4m + *posi4m).M(), (*elec4m + *posi4m).Pt());
+            chic_mass_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+            chic_mass_diff_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M() - (*elec4m + *posi4m).M() + 3.096, (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+
+            if (fabs(branchings - chic0_branching) < 0.00001){
+                chic0_mass_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+                chic0_mass_diff_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M() - (*elec4m + *posi4m).M() + 3.096, (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+            } else if (fabs(branchings - chic1_branching) < 0.00001){
+                chic1_mass_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+                chic1_mass_diff_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M() - (*elec4m + *posi4m).M() + 3.096, (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+            } else if (fabs(branchings - chic2_branching) < 0.00001) {
+                chic2_mass_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M(), (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+                chic2_mass_diff_with_gamma_elec_posi_resolution->Fill((*elec4m + *posi4m + *gamm4m).M() - (*elec4m + *posi4m).M() + 3.096, (*elec4m + *posi4m + *gamm4m).Pt(), branchings);
+            }
+
+            delete elec4m;
+            delete posi4m;
+            delete gamm4m;
         }
 
-        Chic_parameters[opt_electron_rate - min_opt_electron_rate]->cd();
-        mass_chic0_pt_depends->Write();
-        sigma_chic0_pt_depends->Write();
-        efficiency_chic0_pt_depends->Write();
-        mass_chic1_pt_depends->Write();
-        sigma_chic1_pt_depends->Write();
-        efficiency_chic1_pt_depends->Write();
-        mass_chic2_pt_depends->Write();
-        sigma_chic2_pt_depends->Write();
-        efficiency_chic2_pt_depends->Write();
+        // for (int i = 0; i < chic0_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic0_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(0, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic0_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic0_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic0_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        // }
+
+        // for (int i = 0; i < chic0_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic0_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic0_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(0, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        //     mass_chic0_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
+        //     mass_chic0_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
+        //     sigma_chic0_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
+        //     sigma_chic0_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
+        //     efficiency_chic0_pt_depends->SetBinContent(i + 1, (chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic0_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
+        // }
+
+        // for (int i = 0; i < chic1_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic1_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic1_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic1_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(1, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic1_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic1_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic1_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        // }
+
+        // for (int i = 0; i < chic1_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic1_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic1_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(1, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        //     mass_chic1_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
+        //     mass_chic1_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
+        //     sigma_chic1_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
+        //     sigma_chic1_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
+        //     efficiency_chic1_pt_depends->SetBinContent(i + 1, (chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic1_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
+        // }
+
+        // for (int i = 0; i < chic2_mass_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic2_mass_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic2_mass_with_gamma_elec_posi_resolution->ProjectionX(Form("chic2_mass_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(1, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic2_mass_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic2_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic2_mass_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+            
+        // }
+
+        // for (int i = 0; i < chic2_mass_diff_with_gamma_elec_posi_resolution->GetNbinsY(); ++i){
+        //     chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i] = (TH1D*)chic2_mass_diff_with_gamma_elec_posi_resolution->ProjectionX(Form("chic2_mass_diff_with_gamma_elec_posi_resolution_slice_%02d", i + 1), i + 1, i + 1);
+        //     TF1* gaus = new TF1("gaus", "[0]*TMath::Gaus(x, [1], [2])", 0., 4.5);
+        //     gaus->SetParameter(1, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximum());
+        //     gaus->SetParameter(1, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetBinCenter(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetMaximumBin()));
+        //     gaus->SetParameter(2, chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->GetStdDev());
+        //     gaus->SetParLimits(2, 0., 1.);
+        //     chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus);
+        //     chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Fit(gaus, "", "", gaus->GetParameter(1) - 1 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2));
+        //     mass_chic2_pt_depends->SetBinContent(i + 1, gaus->GetParameter(1));
+        //     mass_chic2_pt_depends->SetBinError(i + 1, gaus->GetParError(1));
+        //     sigma_chic2_pt_depends->SetBinContent(i + 1, gaus->GetParameter(2));
+        //     sigma_chic2_pt_depends->SetBinError(i + 1, gaus->GetParError(2));
+        //     // efficiency_chic2_pt_depends->SetBinContent(i + 1, gaus->Integral(gaus->GetParameter(1) - 5 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2))/(chic2_branching * chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral()));
+        //     // efficiency_chic2_pt_depends->SetBinError(i + 1, gaus->IntegralError(gaus->GetParameter(1) - 5 * gaus->GetParameter(2), gaus->GetParameter(1) + 5 * gaus->GetParameter(2))/(chic2_branching * chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral()));
+        //     efficiency_chic2_pt_depends->SetBinContent(i + 1, (chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) - 5 * gaus->GetParameter(2)), chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->FindBin(gaus->GetParameter(1) + 5 * gaus->GetParameter(2)))/(chic2_mass_diff_with_gamma_elec_posi_resolution_slice[i]->Integral())));
+        // }
+
+        output_data->cd(); 
+
+        
+        opt_electron_rate_dir[opt_electron_rate - min_opt_electron_rate]->cd();
+
+        Inv_mass_spectrum_before_simulation[opt_electron_rate - min_opt_electron_rate]->cd();
+        Jpsi_mass->Write();
+        chic_mass_before->Write();
+
+        Inv_mass_spectrum_after_simulation[opt_electron_rate - min_opt_electron_rate]->cd();
+        chic_mass_with_gamma_resolution->Write();
+        chic_mass_with_gamma_elec_posi_resolution->Write();
+        chic_mass_diff_with_gamma_elec_posi_resolution->Write();
+
+        Inv_mass_sep_chic_after_simulation[opt_electron_rate - min_opt_electron_rate]->cd();
+        chic0_mass_with_gamma_elec_posi_resolution->Write();
+        chic1_mass_with_gamma_elec_posi_resolution->Write();
+        chic2_mass_with_gamma_elec_posi_resolution->Write();
+        chic0_mass_diff_with_gamma_elec_posi_resolution->Write();
+        chic1_mass_diff_with_gamma_elec_posi_resolution->Write();
+        chic2_mass_diff_with_gamma_elec_posi_resolution->Write();
+
+
+        // for (auto slice_chic0_mass_diff : chic0_mass_diff_with_gamma_elec_posi_resolution_slice){
+        //     slice_chic0_mass_diff->Write();
+        // }
+        // for (auto slice_chic1_mass_diff : chic1_mass_diff_with_gamma_elec_posi_resolution_slice){
+        //     slice_chic1_mass_diff->Write();
+        // }
+        // for (auto slice_chic2_mass_diff : chic2_mass_diff_with_gamma_elec_posi_resolution_slice){
+        //     slice_chic2_mass_diff->Write();
+        // }
+
+        // Chic_parameters[opt_electron_rate - min_opt_electron_rate]->cd();
+        // mass_chic0_pt_depends->Write();
+        // sigma_chic0_pt_depends->Write();
+        // efficiency_chic0_pt_depends->Write();
+        // mass_chic1_pt_depends->Write();
+        // sigma_chic1_pt_depends->Write();
+        // efficiency_chic1_pt_depends->Write();
+        // mass_chic2_pt_depends->Write();
+        // sigma_chic2_pt_depends->Write();
+        // efficiency_chic2_pt_depends->Write();
 
         
         Energy_distribution_in_cells_chic[opt_electron_rate - min_opt_electron_rate]->cd();
